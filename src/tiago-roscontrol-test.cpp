@@ -154,9 +154,53 @@ namespace tiago_roscontrol_test
 		 , lns.c_str());
       }
 
+    // Get a pointer to the joint effort control interface
+    effort_iface_ = robot_hw->get<EffortJointInterface>();
+    if (! effort_iface_)
+      {
+	ROS_WARN("This controller did not find a hardware interface of type EffortJointInterface."
+		 " Make sure this is registered in the %s::RobotHW class if it is required.",
+		 lns.c_str());
+      }
+
+    // Get a pointer to the force-torque sensor interface
+    ft_iface_ = robot_hw->get<ForceTorqueSensorInterface>();
+    if (! ft_iface_ )
+      {
+	ROS_WARN("This controller did not find a hardware interface of type '%s '. "
+		 " Make sure this is registered inthe %s::RobotHW class if it is required.",
+		  internal :: demangledTypeName<ForceTorqueSensorInterface>().c_str(),lns.c_str());
+      }
+
+    // Get a pointer to the IMU sensor interface
+    imu_iface_ = robot_hw->get<ImuSensorInterface>();
+    if (! imu_iface_)
+      {
+	ROS_WARN("This controller did not find a hardware interface of type '%s'."
+		 " Make sure this is registered in the %s::RobotHW class if it is required.",
+		    internal :: demangledTypeName<ImuSensorInterface>().c_str(),lns.c_str());
+      }
+
+    // Temperature sensor not available in simulation mode
+    if (!simulation_mode_)
+      {
+#ifdef TEMPERATURE_SENSOR_CONTROLLER
+	// Get a pointer to the actuator temperature sensor interface
+	act_temp_iface_ = robot_hw->get<ActuatorTemperatureSensorInterface>();
+	if (!act_temp_iface_)
+	  {
+	    ROS_WARN("This controller did not find a hardware interface of type '%s'."
+		     " Make sure this is registered in the %s::RobotHW class if it is required.",
+		      internal :: demangledTypeName<ActuatorTemperatureSensorInterface>().c_str(),lns.c_str());
+	  }
+#endif
+      }
+
+
     // Return which resources are claimed by this controller
     pos_iface_->clearClaims();
     vel_iface_->clearClaims();
+    effort_iface_->clearClaims();
 
     if (! init())
       {
@@ -181,12 +225,19 @@ namespace tiago_roscontrol_test
     iface_res.resources = vel_iface_->getClaims();
     claimed_resources.push_back(iface_res);
 
+    iface_res.hardware_interface =
+      hardware_interface::internal::
+      demangledTypeName<EffortJointInterface>();
+    iface_res.resources = effort_iface_->getClaims();
+    claimed_resources.push_back(iface_res);
+
     /// Display claimed ressources
     if (verbosity_level_>0)
       displayClaimedResources(claimed_resources);
 
     pos_iface_->clearClaims();
     vel_iface_->clearClaims();
+    effort_iface_->clearClaims();
 #else
     claimed_resources = pos_iface_->getClaims();
     /// Display claimed ressources
@@ -199,6 +250,11 @@ namespace tiago_roscontrol_test
     if (verbosity_level_>0)
       displayClaimedResources(claimed_resources);
     vel_iface_->clearClaims();
+
+    claimed_resources = effort_iface_->getClaims();
+    if (verbosity_level_>0)
+      displayClaimedResources(claimed_resources);
+    effort_iface_->clearClaims();
 #endif
     if (verbosity_level_>0)
       ROS_INFO_STREAM("Initialization of sot-controller Ok !");
@@ -213,6 +269,16 @@ namespace tiago_roscontrol_test
   {
     if (!initJoints())
       return false;
+    if (!initIMU()) {
+      ROS_WARN("could not initialize IMU sensor(s).");
+    }
+    if (!initForceSensors()) {
+      ROS_WARN("could not initialize force sensor(s).");
+    }
+    if (!initTemperatureSensors()) {
+      ROS_WARN("could not initialize temperature sensor(s).");
+    }
+
     return true;
   }
 
@@ -229,6 +295,58 @@ namespace tiago_roscontrol_test
   bool TiagoRosControlTest::
   readParamsPositionControlData(ros::NodeHandle &)
   {
+    return false;
+  }
+
+  bool TiagoRosControlTest::
+  readParamsEffortControlPDMotorControlData(ros::NodeHandle &robot_nh)
+  {
+    // Read libname
+    if (robot_nh.hasParam("/tiago_roscontrol_test/effort_control_pd_motor_init/gains"))
+      {
+       XmlRpc::XmlRpcValue xml_rpc_ecpd_init;
+       robot_nh.getParamCached("/tiago_roscontrol_test/effort_control_pd_motor_init/gains",
+                               xml_rpc_ecpd_init);
+
+       /// Display gain during transition control.
+       if (verbosity_level_>0)
+    	 ROS_INFO("/tiago_roscontrol_test/effort_control_pd_motor_init/gains: %d %d %d\n",
+    		  xml_rpc_ecpd_init.getType(),
+		  XmlRpc::XmlRpcValue::TypeArray,
+		  XmlRpc::XmlRpcValue::TypeStruct);
+
+       effort_mode_pd_motors_.clear();
+
+       for (size_t i=0;i<joints_name_.size();i++)
+         {
+	   // Check if the joint should be in ROS EFFORT mode
+	   std::map<std::string,JointSotHandle>::iterator
+	     search_joint_sot_handle = joints_.find(joints_name_[i]);
+	   if (search_joint_sot_handle!=joints_.end())
+	     {
+	       JointSotHandle aJointSotHandle = search_joint_sot_handle->second;
+	       if (aJointSotHandle.ros_control_mode==EFFORT)
+		 {
+		   // Test if PID data is present
+		   if (xml_rpc_ecpd_init.hasMember(joints_name_[i]))
+		     {
+		       std::string prefix=
+			 "/tiago_roscontrol_test/effort_control_pd_motor_init/gains/"
+			 + joints_name_[i];
+		       effort_mode_pd_motors_[joints_name_[i]].
+			 read_from_xmlrpc_value(prefix);
+		     }
+		   else
+		     ROS_ERROR("No PID data for effort controlled joint %s in /tiago_roscontrol_test/effort_control_pd_motor_init/gains/",
+			       joints_name_[i].c_str());
+		 }
+	     }
+
+         }
+       return true;
+      }
+
+    ROS_ERROR("No parameter /tiago_roscontrol_test/effort_controler_pd_motor_init");
     return false;
   }
 
@@ -310,7 +428,7 @@ namespace tiago_roscontrol_test
 		      JointSotHandle &aJointSotHandle)
   {
     std::string scontrol_mode;
-    static const std::string svelocity("VELOCITY"),sposition("POSITION");
+    static const std::string seffort("EFFORT"),svelocity("VELOCITY"),sposition("POSITION");
     static const std::string ros_control_mode = "ros_control_mode";
 
     /// Read the list of control_mode
@@ -330,12 +448,15 @@ namespace tiago_roscontrol_test
       joint_control_mode=POSITION;
     else if (scontrol_mode==svelocity)
       joint_control_mode=VELOCITY;
+    else if (scontrol_mode==seffort)
+      joint_control_mode=EFFORT;
     else {
-      ROS_ERROR("%s for %s not understood. Expected %s or %s. Got %s",
+      ROS_ERROR("%s for %s not understood. Expected %s, %s or %s. Got %s",
     	    ros_control_mode.c_str(),
     	    joint_name.c_str(),
                 sposition.c_str(),
                 svelocity.c_str(),
+                seffort.c_str(),
     	    scontrol_mode.c_str());
       return false;
     }
@@ -395,6 +516,7 @@ namespace tiago_roscontrol_test
     if (!readParamsControlMode(robot_nh))
       return false;
 
+    readParamsEffortControlPDMotorControlData(robot_nh);
     readParamsVelocityControlPDMotorControlData(robot_nh);
     readParamsPositionControlData(robot_nh);
     return true;
@@ -431,6 +553,11 @@ namespace tiago_roscontrol_test
 		      ROS_INFO_STREAM("Found joint " << joint_name << " in velocity "
 				      << i << " " << aJointSotHandle.joint.getName());
                     break;
+                  case EFFORT:
+                    aJointSotHandle.joint = effort_iface_->getHandle(joint_name);
+                    if (verbosity_level_>0)
+                      ROS_INFO_STREAM("Found joint " << joint_name << " in effort "
+                          << i << " " << aJointSotHandle.joint.getName());
                 }
 
 		// throws on failure
@@ -450,6 +577,100 @@ namespace tiago_roscontrol_test
 
     return true ;
 
+  }
+
+  bool TiagoRosControlTest::
+  initIMU()
+  {
+    if (!imu_iface_) return false;
+
+    // get all imu sensor names
+    const std :: vector<std :: string >& imu_iface_names = imu_iface_->getNames();
+    if (verbosity_level_>0)
+      {
+	for (unsigned i=0; i <imu_iface_names.size(); i++)
+	  ROS_INFO("Got sensor %s", imu_iface_names[i].c_str());
+      }
+    for (unsigned i=0; i <imu_iface_names.size(); i++){
+      // sensor handle on imu
+      imu_sensor_.push_back(imu_iface_->getHandle(imu_iface_names[i]));
+    }
+
+    return true ;
+  }
+
+  bool TiagoRosControlTest::
+  initForceSensors()
+  {
+    if (!ft_iface_) return false;
+
+    // get force torque sensors names package.
+    const std::vector<std::string>& ft_iface_names = ft_iface_->getNames();
+    if (verbosity_level_>0)
+      {
+	for (unsigned i=0; i <ft_iface_names.size(); i++)
+	  ROS_INFO("Got sensor %s", ft_iface_names[i].c_str());
+      }
+    for (unsigned i=0; i <ft_iface_names.size(); i++){
+      // sensor handle on torque forces
+      ft_sensors_.push_back(ft_iface_->getHandle(ft_iface_names[i]));
+    }
+    return true;
+  }
+
+  bool TiagoRosControlTest::
+  initTemperatureSensors()
+  {
+    if (!simulation_mode_)
+      {
+#ifdef TEMPERATURE_SENSOR_CONTROLLER
+        if (!act_temp_iface_) return false;
+
+	// get temperature sensors names
+	const std::vector<std::string>& act_temp_iface_names = act_temp_iface_->getNames();
+
+	if (verbosity_level_>0)
+	  {
+	    ROS_INFO("Actuator temperature sensors: %ld",act_temp_iface_names.size() );
+
+	    for (unsigned i=0; i <act_temp_iface_names.size(); i++)
+	      ROS_INFO("Got sensor %s", act_temp_iface_names[i].c_str());
+	  }
+
+	for (unsigned i=0; i <act_temp_iface_names.size(); i++){
+	  // sensor handle on actuator temperature
+	  act_temp_sensors_.push_back(act_temp_iface_->getHandle(act_temp_iface_names[i]));
+	}
+#endif
+      }
+
+    return true;
+  }
+
+  void TiagoRosControlTest::
+  localStandbyEffortControlMode(const ros::Duration& period)
+  {
+    // ROS_INFO("Compute command for effort mode: %d %d",joints_.size(),effort_mode_pd_motors_.size());
+    for(unsigned int idJoint=0;idJoint<joints_.size();idJoint++)
+      {
+	std::string joint_name = joints_name_[idJoint];
+	std::map<std::string,ControlPDMotorControlData>::iterator
+	  search_ecpd = effort_mode_pd_motors_.find(joint_name);
+
+	if (search_ecpd!=effort_mode_pd_motors_.end())
+	  {
+	    ControlPDMotorControlData & ecpdcdata = search_ecpd->second;
+	    JointSotHandle &aJointSotHandle = joints_[joint_name];
+	    lhi::JointHandle &aJoint = aJointSotHandle.joint;
+
+	    double vel_err = 0 - aJoint.getVelocity();
+	    double err = aJointSotHandle.desired_init_pose - aJoint.getPosition();
+
+	    double local_command = ecpdcdata.pid_controller.computeCommand(err,vel_err,period);
+	    // Apply command
+	    aJoint.setCommand(local_command);
+	  }
+      }
   }
 
   void TiagoRosControlTest::
@@ -548,6 +769,7 @@ namespace tiago_roscontrol_test
      // But in velocity mode it means that we are sending 0
      // Therefore implements a default PD controller on the system.
      // Applying both to handle mixed system.
+     localStandbyEffortControlMode(period);
      localStandbyVelocityControlMode(period);
      localStandbyPositionControlMode(time, period);
    }

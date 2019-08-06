@@ -23,7 +23,7 @@
 
 namespace tiago_roscontrol_test
 {
-  enum ControlMode { POSITION, VELOCITY };
+  enum ControlMode { POSITION, VELOCITY, EFFORT};
   namespace lhi = hardware_interface;
   namespace lci = controller_interface;
 
@@ -66,18 +66,47 @@ namespace tiago_roscontrol_test
     std::map<std::string,JointSotHandle> joints_;
     std::vector<std::string> joints_name_;
 
+    /// \brief Vector towards the IMU.
+    std::vector<lhi::ImuSensorHandle> imu_sensor_;
+
+    /// \brief Vector of 6D force sensor.
+    std::vector<lhi::ForceTorqueSensorHandle> ft_sensors_;
+
+#ifdef TEMPERATURE_SENSOR_CONTROLLER
+    /// \brief Vector of temperature sensors for the actuators.
+    std::vector<lhi::ActuatorTemperatureSensorHandle>
+    act_temp_sensors_;
+#endif
+
     /// \brief Interface to the joints controlled in position.
     lhi::PositionJointInterface * pos_iface_;
 
     /// \brief Interface to the joints controlled in position.
     lhi::VelocityJointInterface * vel_iface_;
 
+    /// \brief Interface to the joints controlled in force.
+    lhi::EffortJointInterface * effort_iface_;
+
+    /// \brief Interface to the sensors (IMU).
+    lhi::ImuSensorInterface* imu_iface_;
+
+    /// \brief Interface to the sensors (Force).
+    lhi::ForceTorqueSensorInterface* ft_iface_;
+
+#ifdef TEMPERATURE_SENSOR_CONTROLLER
+    /// \brief Interface to the actuator temperature sensor.
+    lhi::ActuatorTemperatureSensorInterface  * act_temp_iface_;
+#endif
     /// @}
 
     const std::string type_name_;
 
     /// \brief Adapt the interface to Gazebo simulation
     bool simulation_mode_;
+
+    /// \brief Implement a PD controller for the robot when the dynamic graph
+    /// is not on.
+    std::map<std::string, ControlPDMotorControlData> effort_mode_pd_motors_;
 
     /// \brief Implement a PD controller for the robot when the dynamic graph
     /// is not on.
@@ -121,6 +150,12 @@ namespace tiago_roscontrol_test
 
     /// Initialize the hardware interface using the joints.
     bool initJoints();
+    /// Initialize the hardware interface accessing the IMU.
+    bool initIMU();
+    /// Initialize the hardware interface accessing the force sensors.
+    bool initForceSensors();
+    /// Initialize the hardware interface accessing the temperature sensors.
+    bool initTemperatureSensors();
 
     ///@{ \name Read the parameter server
     /// \brief Entry point
@@ -135,6 +170,9 @@ namespace tiago_roscontrol_test
     /// \brief Read the PID information of the robot in velocity mode.
     bool readParamsVelocityControlPDMotorControlData(ros::NodeHandle &robot_nh);
 
+    /// \brief Read the PID information of the robot in effort mode.
+    bool readParamsEffortControlPDMotorControlData(ros::NodeHandle &robot_nh);
+
     /// \brief Read the desired initial pose of the robot in position mode.
     bool readParamsPositionControlData(ros::NodeHandle &robot_nh);
 
@@ -143,6 +181,8 @@ namespace tiago_roscontrol_test
     ///@}
 
     ///@{ Control the robot while waiting for the SoT
+    /// Default control in effort.
+    void localStandbyEffortControlMode(const ros::Duration& period);
     /// Default control in velocity.
     void localStandbyVelocityControlMode(const ros::Duration& period);
     /// Default control in position.
