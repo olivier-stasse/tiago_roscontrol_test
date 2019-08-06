@@ -219,9 +219,9 @@ namespace tiago_roscontrol_test
   void TiagoRosControlTest::
   readParamsVerbosityLevel(ros::NodeHandle &robot_nh)
   {
-    if (robot_nh.hasParam("/sot_controller/verbosity_level"))
+    if (robot_nh.hasParam("/tiago_roscontrol_test/verbosity_level"))
       {
-	robot_nh.getParam("/sot_controller/verbosity_level",verbosity_level_);
+	robot_nh.getParam("/tiago_roscontrol_test/verbosity_level",verbosity_level_);
 	ROS_INFO_STREAM("Verbosity_level " << verbosity_level_);
       }
   }
@@ -236,15 +236,15 @@ namespace tiago_roscontrol_test
   readParamsVelocityControlPDMotorControlData(ros::NodeHandle &robot_nh)
   {
     // Read libname
-    if (robot_nh.hasParam("/sot_controller/velocity_control_pd_motor_init/gains"))
+    if (robot_nh.hasParam("/tiago_roscontrol_test/velocity_control_pd_motor_init/gains"))
       {
        XmlRpc::XmlRpcValue xml_rpc_ecpd_init;
-       robot_nh.getParamCached("/sot_controller/velocity_control_pd_motor_init/gains",
+       robot_nh.getParamCached("/tiago_roscontrol_test/velocity_control_pd_motor_init/gains",
                                xml_rpc_ecpd_init);
 
        /// Display gain during transition control.
        if (verbosity_level_>0)
-    	 ROS_INFO("/sot_controller/velocity_control_pd_motor_init/gains: %d %d %d\n",
+    	 ROS_INFO("/tiago_roscontrol_test/velocity_control_pd_motor_init/gains: %d %d %d\n",
     		  xml_rpc_ecpd_init.getType(),
 		  XmlRpc::XmlRpcValue::TypeArray,
 		  XmlRpc::XmlRpcValue::TypeStruct);
@@ -265,13 +265,13 @@ namespace tiago_roscontrol_test
 		   if (xml_rpc_ecpd_init.hasMember(joints_name_[i]))
 		     {
 		       std::string prefix=
-			 "/sot_controller/velocity_control_pd_motor_init/gains/"
+			 "/tiago_roscontrol_test/velocity_control_pd_motor_init/gains/"
 			 + joints_name_[i];
 		       velocity_mode_pd_motors_[joints_name_[i]].
 			 read_from_xmlrpc_value(prefix);
 		     }
 		   else
-		     ROS_ERROR("No PID data for velocity controlled joint %s in /sot_controller/velocity_control_pd_motor_init/gains/",
+		     ROS_ERROR("No PID data for velocity controlled joint %s in /tiago_roscontrol_test/velocity_control_pd_motor_init/gains/",
 			       joints_name_[i].c_str());
 		 }
 	     }
@@ -280,18 +280,18 @@ namespace tiago_roscontrol_test
        return true;
       }
 
-    ROS_ERROR("No parameter /sot_controller/velocity_controler_pd_motor_init");
+    ROS_WARN("No parameter /tiago_roscontrol_test/velocity_controler_pd_motor_init");
     return false;
   }
 
   bool TiagoRosControlTest::
   readParamsJointNames(ros::NodeHandle &robot_nh)
   {
-    /// Check if the /sot_controller/joint_names parameter exists.
-    if (robot_nh.hasParam("/sot_controller/joint_names"))
+    /// Check if the /tiago_roscontrol_test/joint_names parameter exists.
+    if (robot_nh.hasParam("/tiago_roscontrol_test/joint_names"))
       {
     	/// Read the joint_names list from this parameter
-    	robot_nh.getParam("/sot_controller/joint_names",
+    	robot_nh.getParam("/tiago_roscontrol_test/joint_names",
     			  joints_name_);
     	for(std::vector<std::string>::size_type i=0;i<joints_name_.size();i++)
     	  {
@@ -314,7 +314,7 @@ namespace tiago_roscontrol_test
     static const std::string ros_control_mode = "ros_control_mode";
 
     /// Read the list of control_mode
-    ros::NodeHandle rnh_ns("/sot_controller/control_mode/"+joint_name);
+    ros::NodeHandle rnh_ns("/tiago_roscontrol_test/control_mode/"+joint_name);
 
     ControlMode joint_control_mode;
     if (!rnh_ns.getParam(ros_control_mode,scontrol_mode))
@@ -352,7 +352,7 @@ namespace tiago_roscontrol_test
     std::map<std::string,std::string> mapControlMode;
 
     // Read param from control_mode.
-    if (robot_nh.hasParam("/sot_controller/control_mode"))
+    if (robot_nh.hasParam("/tiago_roscontrol_test/control_mode"))
       {
 	/// For each listed joint
 	for(unsigned int idJoint=0;idJoint<joints_name_.size();idJoint++)
@@ -380,9 +380,9 @@ namespace tiago_roscontrol_test
     /// Default to quiet
     readParamsVerbosityLevel(robot_nh);
 
-    /// Read /sot_controller/simulation_mode to know if we are in simulation mode
+    /// Read /tiago_roscontrol_test/simulation_mode to know if we are in simulation mode
     // Defines if we are in simulation node.
-    if (robot_nh.hasParam("/sot_controller/simulation_mode"))
+    if (robot_nh.hasParam("/tiago_roscontrol_test/simulation_mode"))
       simulation_mode_ = true;
 
     /// Calls readParamsJointNames

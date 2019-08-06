@@ -1,4 +1,4 @@
-sot_controller:
+tiago_roscontrol_test:
   type: tiago_roscontrol_test/TiagoRosControlTest
   joints:
     - arm_left_1_joint

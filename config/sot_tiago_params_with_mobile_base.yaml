@@ -1,4 +1,4 @@
-sot_controller:
+tiago_roscontrol_test:
   joint_names: [
     wheel_left_joint, wheel_right_joint,
     torso_lift_joint,

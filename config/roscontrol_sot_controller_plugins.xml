@@ -1,4 +1,4 @@
-<library path="lib/libtiago_roscontrol_test.so">
+<library path="lib/libtiago_roscontrol_test">
 
   <class name="tiago_roscontrol_test/TiagoRosControlTest" type="tiago_roscontrol_test::TiagoRosControlTest" base_class_type="controller_interface::ControllerBase">
     <description>

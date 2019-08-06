@@ -1,4 +1,4 @@
-sot_controller:
+tiago_roscontrol_test:
   joint_names: [
     torso_lift_joint,
     arm_1_joint, arm_2_joint, arm_3_joint, arm_4_joint, arm_5_joint, arm_6_joint, arm_7_joint, gripper_finger_joint,

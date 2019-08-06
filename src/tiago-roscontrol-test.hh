@@ -151,7 +151,7 @@ namespace tiago_roscontrol_test
     ///@}
 
     /// Returns control mode by reading rosparam.
-    /// It reads /sot_controller/control_mode/joint_name
+    /// It reads /tiago_roscontrol_test/control_mode/joint_name
     /// and check 
     bool
     getJointControlMode(std::string &joint_name,

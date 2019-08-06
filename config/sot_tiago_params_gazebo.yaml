@@ -1,4 +1,4 @@
-sot_controller:
+tiago_roscontrol_test:
   simulation_mode: gazebo
   joint_names: [
     torso_lift_joint,
