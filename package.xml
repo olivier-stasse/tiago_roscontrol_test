@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<package>
+  <name>tiago_roscontrol_test</name>
+  <version>0.0.0</version>
+  <description>Test of ros-control on Tiago</description>
+
+  <!-- Maintainer email --> 
+  <maintainer email="jmirabel@laas.fr">Joseph Mirabel</maintainer>
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <license>BSD</license>
+
+  <!-- Author tag -->
+  <author email="jmirabel@laas.fr">Joseph Mirabel</author>
+
+  <!-- The *_depend tags are used to specify dependencies -->
+  <!-- Dependencies can be catkin packages or system dependencies -->
+  <!-- Examples: -->
+  <!-- Use build_depend for packages you need at compile time: -->
+  <!--   <build_depend>message_generation</build_depend> -->
+  <!-- Use buildtool_depend for build tool packages: -->
+  <!--   <buildtool_depend>catkin</buildtool_depend> -->
+  <!-- Use run_depend for packages you need at runtime: -->
+  <!--   <run_depend>message_runtime</run_depend> -->
+  <!-- Use test_depend for packages you need only for testing: -->
+  <!--   <test_depend>gtest</test_depend> -->
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>controller_interface</build_depend>
+  <build_depend>pal_hardware_interfaces</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>controller_interface</run_depend>
+  <run_depend>pal_hardware_interfaces</run_depend>
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <controller_interface plugin="${prefix}/config/roscontrol_sot_controller_plugins.xml"/>
+  </export>
+</package>

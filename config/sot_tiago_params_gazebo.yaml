@@ -1,0 +1,42 @@
+sot_controller:
+  libname: libsot-tiago-steel-controller.so
+  simulation_mode: gazebo
+  joint_names: [
+    wheel_left_joint, wheel_right_joint,
+    torso_lift_joint,
+    arm_1_joint, arm_2_joint, arm_3_joint, arm_4_joint, arm_5_joint, arm_6_joint, arm_7_joint, gripper_finger_joint,
+    head_1_joint, head_2_joint  ]
+  map_rc_to_sot_device: { motor-angles: motor-angles ,
+  joint-angles: joint-angles, velocities: velocities, forces: forces, currents: currents,
+  torques: torques, accelerometer_0: accelerometer_0, gyrometer_0: gyrometer_0,
+  control: control
+  }
+  control_mode:
+    wheel_left_joint:
+      ros_control_mode: VELOCITY
+    wheel_right_joint:
+      ros_control_mode: VELOCITY
+    torso_lift_joint:
+      ros_control_mode: POSITION
+    arm_1_joint:
+      ros_control_mode: POSITION
+    arm_2_joint:
+      ros_control_mode: POSITION
+    arm_3_joint:
+      ros_control_mode: POSITION
+    arm_4_joint:
+      ros_control_mode: POSITION
+    arm_5_joint:
+      ros_control_mode: POSITION
+    arm_6_joint:
+      ros_control_mode: POSITION
+    arm_7_joint:
+      ros_control_mode: POSITION
+    gripper_finger_joint:
+      ros_control_mode: POSITION
+    head_1_joint:
+      ros_control_mode: POSITION
+    head_2_joint:
+      ros_control_mode: POSITION
+  dt: 0.001
+  jitter: 0.0004

@@ -1,0 +1,16 @@
+<launch>
+  <arg name="use_mobile_base" default="false"/>
+
+  <!-- Sot Controller configuration -->
+  <rosparam     if="$(arg use_mobile_base)" command="load" file="$(find tiago_roscontrol_test)/config/sot_tiago_params_with_mobile_base.yaml"/>
+  <rosparam unless="$(arg use_mobile_base)" command="load" file="$(find tiago_roscontrol_test)/config/sot_tiago_params.yaml"/>
+  <rosparam     if="$(arg use_mobile_base)" command="load" ns="/sot_controller/velocity_control_pd_motor_init" file="$(find tiago_roscontrol_test)/config/pids_velocity.yaml"/>
+  <rosparam command="load" file="$(find tiago_roscontrol_test)/config/sot_tiago_controller.yaml" />
+  
+  <!-- Spawn walking controller -->
+  <node name="test_controller_spawner"
+        pkg="controller_manager" type="spawner" output="screen"
+        args="tiago_roscontrol_test" />
+
+</launch>
+

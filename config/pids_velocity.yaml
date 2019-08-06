@@ -1,0 +1,3 @@
+gains:
+  wheel_left_joint:  {p: 1, d: 0.0, i: 0, i_clamp: 1.5 }
+  wheel_right_joint: {p: 1, d: 0.0, i: 0, i_clamp: 1.5 }
