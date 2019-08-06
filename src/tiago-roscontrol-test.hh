@@ -146,7 +146,7 @@ namespace tiago_roscontrol_test
     /// Default control in velocity.
     void localStandbyVelocityControlMode(const ros::Duration& period);
     /// Default control in position.
-    void localStandbyPositionControlMode();
+    void localStandbyPositionControlMode(const ros::Time&, const ros::Duration& );
 
     ///@}
 
@@ -156,6 +156,8 @@ namespace tiago_roscontrol_test
     bool
     getJointControlMode(std::string &joint_name,
 			JointSotHandle &aJointSotHandle);
+
+    ros::Time start_;
   };
 }
 

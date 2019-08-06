@@ -491,7 +491,7 @@ namespace tiago_roscontrol_test
   }
 
   void TiagoRosControlTest::
-  localStandbyPositionControlMode()
+  localStandbyPositionControlMode(const ros::Time& time, const ros::Duration& )
   {
     static bool first_time=true;
 
@@ -507,7 +507,28 @@ namespace tiago_roscontrol_test
 	    JointSotHandle &aJointSotHandle = joints_[joint_name];
 	    lhi::JointHandle &aJoint = aJointSotHandle.joint;
 
-	    aJoint.setCommand(aJointSotHandle.desired_init_pose);
+            if (joint_name == "torso_lift_joint") {
+              double t = (time-start_).toSec();
+              double T = 5.; // Period in seconds.
+              double A = 0.025;
+              double l = aJointSotHandle.desired_init_pose;
+              double lM = std::max (l, 0.3);
+              double lm = std::min (l, 0.002);
+
+              if      (l + A > lM) {
+                A = std::max (lM - l, 0.);
+                aJointSotHandle.desired_init_pose -= 0.001;
+              } else if (l - A < lm) {
+                A = std::max (l - lm, 0.);
+                aJointSotHandle.desired_init_pose += 0.001;
+              }
+              if (A < 0.001) {
+                ROS_WARN ("Amplitude is lower than 1 millimeter.");
+              }
+              aJoint.setCommand(aJointSotHandle.desired_init_pose + A*std::sin(2 * M_PI * t / T));
+            } else {
+              aJoint.setCommand(aJointSotHandle.desired_init_pose);
+            }
 
 	    assert(aJoint.getName() == joint_name);
 	    if (first_time)
@@ -522,18 +543,19 @@ namespace tiago_roscontrol_test
   }
 
   void TiagoRosControlTest::
-  update(const ros::Time&, const ros::Duration& period)
+  update(const ros::Time& time, const ros::Duration& period)
    {
      // But in velocity mode it means that we are sending 0
      // Therefore implements a default PD controller on the system.
      // Applying both to handle mixed system.
      localStandbyVelocityControlMode(period);
-     localStandbyPositionControlMode();
+     localStandbyPositionControlMode(time, period);
    }
 
   void TiagoRosControlTest::
-  starting(const ros::Time &)
+  starting(const ros::Time & time)
   {
+    start_ = time;
   }
 
   void TiagoRosControlTest::
