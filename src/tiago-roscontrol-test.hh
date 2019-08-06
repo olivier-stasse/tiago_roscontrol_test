@@ -21,6 +21,9 @@
 #include <ros/ros.h>
 #include <control_toolbox/pid.h>
 
+/** URDF DOM*/
+#include <urdf_parser/urdf_parser.h>
+
 /* Local header */
 #include "log.hh"
 
@@ -129,6 +132,9 @@ namespace tiago_roscontrol_test
     /// 0: no messages or error 1: info 2: debug
     int verbosity_level_;
 
+    /// URDF model of the robot.
+    urdf::ModelInterfaceSharedPtr modelURDF_;
+
     /// Profile log
     rc_sot_system::ProfileLog profileLog_;
 
@@ -232,6 +238,9 @@ namespace tiago_roscontrol_test
     void localStandbyPositionControlMode(const ros::Time&, const ros::Duration& );
 
     ///@}
+
+    /// Read URDF model from /robot_description parameter.
+    bool readUrdf(ros::NodeHandle &robot_nh);
 
     /// Returns control mode by reading rosparam.
     /// It reads /tiago_roscontrol_test/control_mode/joint_name

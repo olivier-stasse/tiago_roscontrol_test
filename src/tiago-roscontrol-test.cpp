@@ -446,6 +446,26 @@ namespace tiago_roscontrol_test
     	  {
     	    if (verbosity_level_>0)
     	      ROS_INFO_STREAM("joints_name_[" << i << "]=" << joints_name_[i]);
+
+    	    if (modelURDF_.use_count())
+    	      {
+    		urdf::JointConstSharedPtr aJCSP = modelURDF_->getJoint(joints_name_[i]);
+    		if (aJCSP.use_count()!=0)
+    		  {
+    		    if (verbosity_level_>0)
+    		      ROS_INFO_STREAM( joints_name_[i] + " found in the robot model" );
+    		  }
+    		else
+    		  {
+    		    ROS_ERROR(" %s not found in the robot model",joints_name_[i].c_str());
+    		    return false;
+    		  }
+    	      }
+    	    else
+    	      {
+    		ROS_ERROR("No robot model loaded in /robot_description");
+    		return false;
+	      }
 	  }
       }
     else
@@ -530,6 +550,26 @@ namespace tiago_roscontrol_test
   }
 
   bool TiagoRosControlTest::
+  readUrdf(ros::NodeHandle &robot_nh)
+  {
+    /// Reading the parameter /robot_description which contains the robot
+    /// description
+    if (!robot_nh.hasParam("/robot_description"))
+      {
+	ROS_ERROR("ROS application does not have robot_description");
+	return false;
+      }
+    std::string robot_description_str;
+
+    robot_nh.getParam("/robot_description",robot_description_str);
+
+    modelURDF_ = urdf::parseURDF(robot_description_str);
+    if (verbosity_level_>0)
+      ROS_INFO("Loaded /robot_description %ld",modelURDF_.use_count());
+    return true;
+  }
+
+  bool TiagoRosControlTest::
   readParams(ros::NodeHandle &robot_nh)
   {
     /// Read the level of verbosity for the controller (0: quiet, 1: info, 2: debug).
@@ -540,6 +580,9 @@ namespace tiago_roscontrol_test
     // Defines if we are in simulation node.
     if (robot_nh.hasParam("/tiago_roscontrol_test/simulation_mode"))
       simulation_mode_ = true;
+
+    /// Read URDF file.
+    readUrdf(robot_nh);
 
     /// Calls readParamsJointNames
     // Reads the list of joints to be controlled.
