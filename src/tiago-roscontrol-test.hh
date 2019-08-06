@@ -21,6 +21,9 @@
 #include <ros/ros.h>
 #include <control_toolbox/pid.h>
 
+/* Local header */
+#include "log.hh"
+
 namespace tiago_roscontrol_test
 {
   enum ControlMode { POSITION, VELOCITY, EFFORT};
@@ -58,6 +61,12 @@ namespace tiago_roscontrol_test
   class TiagoRosControlTest : public lci::ControllerBase
   {
 
+  protected:
+    /// Robot nb dofs.
+    size_t nbDofs_;
+
+    /// Data log.
+    rc_sot_system::DataToLog DataOneIter_;
   private:
 
     /// @{ \name Ros-control related fields
@@ -99,6 +108,10 @@ namespace tiago_roscontrol_test
 #endif
     /// @}
 
+    /// \brief Log
+    rc_sot_system::Log RcSotLog_;
+    /// @}
+
     const std::string type_name_;
 
     /// \brief Adapt the interface to Gazebo simulation
@@ -115,6 +128,9 @@ namespace tiago_roscontrol_test
     /// \brief Verbosity level for ROS messages during initRequest/initialization phase.
     /// 0: no messages or error 1: info 2: debug
     int verbosity_level_;
+
+    /// Profile log
+    rc_sot_system::ProfileLog profileLog_;
 
   public :
 
@@ -157,6 +173,10 @@ namespace tiago_roscontrol_test
     /// Initialize the hardware interface accessing the temperature sensors.
     bool initTemperatureSensors();
 
+    /// Initialize internal structure for the logs based on nbDofs
+    /// number of force sensors and size of the buffer.
+    void initLogs();
+
     ///@{ \name Read the parameter server
     /// \brief Entry point
     bool readParams(ros::NodeHandle &robot_nh);
@@ -178,6 +198,29 @@ namespace tiago_roscontrol_test
 
     /// \brief Read verbosity level to display messages mostly during initialization
     void readParamsVerbosityLevel(ros::NodeHandle &robot_nh);
+    ///@}
+
+    /// \brief Fill the SoT map structures
+    void fillSensorsIn(std::string &title, std::vector<double> & data);
+
+    /// \brief Get the information from the low level and calls fillSensorsIn.
+    void fillJoints();
+
+    /// In the map sensorsIn_ creates the key "name_IMUNb"
+    /// and associate to this key the vector data.
+    void setSensorsImu(std::string &name,
+		       int IMUNb,
+		       std::vector<double> &data);
+
+    /// @{ \name Fill the sensors
+    /// Read the imus and set the interface to the SoT.
+    void fillImu();
+    /// Read the force sensors
+    void fillForceSensors();
+    /// Read the temperature sensors
+    void fillTempSensors();
+    /// Entry point for reading all the sensors .
+    void fillSensors();
     ///@}
 
     ///@{ Control the robot while waiting for the SoT

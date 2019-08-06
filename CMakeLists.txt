@@ -40,6 +40,7 @@ include_directories(
 ## Declare a C++ library
 add_library(tiago_roscontrol_test
 src/tiago-roscontrol-test.cpp
+src/log.cpp
 )
 
 ## Add cmake target dependencies of the executable
