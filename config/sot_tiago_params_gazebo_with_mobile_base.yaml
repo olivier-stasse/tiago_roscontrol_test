@@ -3,7 +3,7 @@ tiago_roscontrol_test:
   joint_names: [
     wheel_left_joint, wheel_right_joint,
     torso_lift_joint,
-    arm_1_joint, arm_2_joint, arm_3_joint, arm_4_joint, arm_5_joint, arm_6_joint, arm_7_joint, gripper_finger_joint,
+    arm_1_joint, arm_2_joint, arm_3_joint, arm_4_joint, arm_5_joint, arm_6_joint, arm_7_joint, gripper_left_finger_joint, gripper_right_finger_joint,
     head_1_joint, head_2_joint  ]
   control_mode:
     wheel_left_joint:
@@ -26,7 +26,9 @@ tiago_roscontrol_test:
       ros_control_mode: POSITION
     arm_7_joint:
       ros_control_mode: POSITION
-    gripper_finger_joint:
+    gripper_left_finger_joint:
+      ros_control_mode: POSITION
+    gripper_right_finger_joint:
       ros_control_mode: POSITION
     head_1_joint:
       ros_control_mode: POSITION

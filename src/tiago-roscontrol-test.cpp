@@ -108,8 +108,12 @@ namespace tiago_roscontrol_test
 
   void TiagoRosControlTest::initLogs()
   {
-    ROS_INFO_STREAM("Initialize log data structure");
+    ROS_INFO_STREAM("Initialize log data structure" << profileLog_.nbDofs);
+    ROS_INFO_STREAM("Initialize log data structure" << profileLog_.nbForceSensors);
+
+
     /// Initialize the size of the data to store.
+    ///
     /// Set temporary profileLog to one
     /// because DataOneIter is just for one iteration.
     size_t tmp_length = profileLog_.length;
@@ -119,7 +123,7 @@ namespace tiago_roscontrol_test
     /// Set profile Log to real good value for the stored data.
     profileLog_.length= tmp_length;
     /// Initialize the data logger for 300s.
-    RcSotLog_.init(profileLog_);
+//    RcSotLog_.init(profileLog_);
 
   }
 
@@ -680,6 +684,7 @@ namespace tiago_roscontrol_test
   bool TiagoRosControlTest::
   initForceSensors()
   {
+    profileLog_.nbForceSensors = 0.0;
     if (!ft_iface_) return false;
 
     // get force torque sensors names package.
@@ -941,7 +946,7 @@ namespace tiago_roscontrol_test
 
 	    double local_command = ecpdcdata.pid_controller.computeCommand(err,vel_err,period);
 
-	    aJoint.setCommand(local_command);
+      aJoint.setCommand(0.2);
 
 	    assert(aJoint.getName() == joint_name);
 	    if (first_time)
@@ -991,7 +996,51 @@ namespace tiago_roscontrol_test
                 ROS_WARN ("Amplitude is lower than 1 millimeter.");
               }
               aJoint.setCommand(aJointSotHandle.desired_init_pose + A*std::sin(2 * M_PI * t / T));
-            } else {
+            }
+            else if (joint_name == "head_1_joint")
+            {
+              double t = (time-start_).toSec();
+              double T = 5.; // Period in seconds.
+              double A = 0.25;
+              double l = aJointSotHandle.desired_init_pose;
+              double lM = std::max (l, 1.0);
+              double lm = std::min (l, -1.0);
+
+              if      (l + A > lM) {
+                A = std::max (lM - l, 0.);
+                aJointSotHandle.desired_init_pose -= 0.001;
+              } else if (l - A < lm) {
+                A = std::max (l - lm, 0.);
+                aJointSotHandle.desired_init_pose += 0.001;
+              }
+              if (A < 0.001) {
+                ROS_WARN ("Amplitude is lower than 1 millimeter.");
+              }
+              aJoint.setCommand(aJointSotHandle.desired_init_pose + A*std::sin(2 * M_PI * t / T));
+            }
+            else if (joint_name == "arm_6_joint")
+            {
+              double t = (time-start_).toSec();
+              double T = 5.; // Period in seconds.
+              double A = 0.25;
+              double l = aJointSotHandle.desired_init_pose;
+              double lM = std::max (l, 1.0);
+              double lm = std::min (l, -1.0);
+
+              if      (l + A > lM) {
+                A = std::max (lM - l, 0.);
+                aJointSotHandle.desired_init_pose -= 0.001;
+              } else if (l - A < lm) {
+                A = std::max (l - lm, 0.);
+                aJointSotHandle.desired_init_pose += 0.001;
+              }
+              if (A < 0.001) {
+                ROS_WARN ("Amplitude is lower than 1 millimeter.");
+              }
+              aJoint.setCommand(aJointSotHandle.desired_init_pose + A*std::sin(2 * M_PI * t / T));
+            }
+            else
+            {
               aJoint.setCommand(aJointSotHandle.desired_init_pose);
             }
 
@@ -1033,7 +1082,7 @@ namespace tiago_roscontrol_test
   stopping(const ros::Time &)
   {
     std::string afilename("/tmp/sot.log");
-    RcSotLog_.save(afilename);
+    //RcSotLog_.save(afilename);
   }
 
 

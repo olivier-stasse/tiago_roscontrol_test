@@ -250,6 +250,10 @@ namespace tiago_roscontrol_test
 			JointSotHandle &aJointSotHandle);
 
     ros::Time start_;
+
+    bool increase_head_ = true;
+    bool increase_arm_ = true;
+    bool increase_gripper_ = true;
   };
 }
 
