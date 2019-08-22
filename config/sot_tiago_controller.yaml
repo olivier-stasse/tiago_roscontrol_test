@@ -8,8 +8,7 @@ tiago_roscontrol_test:
     - arm_left_5_joint
     - arm_left_6_joint
     - arm_left_7_joint
-    - gripper_left_finger_joint
-    - gripper_right_finger_joint
+    - gripper_finger_joint
     - head_1_joint
     - head_2_joint
     - torso_lift_joint

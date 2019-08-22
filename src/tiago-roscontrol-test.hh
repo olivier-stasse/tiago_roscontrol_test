@@ -29,7 +29,7 @@
 
 namespace tiago_roscontrol_test
 {
-  enum ControlMode { POSITION, VELOCITY, EFFORT};
+  enum ControlMode { POSITION, POSITIONWVELOCITY,VELOCITY, EFFORT};
   namespace lhi = hardware_interface;
   namespace lci = controller_interface;
 

@@ -488,6 +488,7 @@ namespace tiago_roscontrol_test
   {
     std::string scontrol_mode;
     static const std::string seffort("EFFORT"),svelocity("VELOCITY"),sposition("POSITION");
+    static const std::string spositionwvelocity("POSITIONWVELOCITY");
     static const std::string ros_control_mode = "ros_control_mode";
 
     /// Read the list of control_mode
@@ -505,6 +506,8 @@ namespace tiago_roscontrol_test
 
     if      (scontrol_mode==sposition)
       joint_control_mode=POSITION;
+    else if (scontrol_mode==spositionwvelocity)
+      joint_control_mode=POSITIONWVELOCITY;
     else if (scontrol_mode==svelocity)
       joint_control_mode=VELOCITY;
     else if (scontrol_mode==seffort)
@@ -629,6 +632,7 @@ namespace tiago_roscontrol_test
 		      ROS_INFO_STREAM("Found joint " << joint_name << " in position "
 				      << i << " " << aJointSotHandle.joint.getName());
                     break;
+                  case POSITIONWVELOCITY:
                   case VELOCITY:
 		    aJointSotHandle.joint = vel_iface_->getHandle(joint_name);
 		    if (verbosity_level_>0)
