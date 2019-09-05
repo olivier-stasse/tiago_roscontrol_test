@@ -12,6 +12,7 @@
 #pragma GCC system_header
 #include <controller_interface/controller.h>
 #include <hardware_interface/joint_command_interface.h>
+#include <hardware_interface/posvel_command_interface.h>
 #include <hardware_interface/imu_sensor_interface.h>
 #include <hardware_interface/force_torque_sensor_interface.h>
 #include <pal_hardware_interfaces/actuator_temperature_interface.h>
@@ -45,6 +46,7 @@ namespace tiago_roscontrol_test
   struct JointSotHandle
   {
     lhi::JointHandle joint;
+    lhi::PosVelJointHandle posvelH;
     double desired_init_pose;
     // This should not be handled in roscontrol_sot package. The control type
     // should be handled in SoT directly, by externalizing the integration from
@@ -58,7 +60,8 @@ namespace tiago_roscontrol_test
   typedef std::set<std::string> ClaimedResources;
 #endif
   /**
-     This class encapsulates the Stack of Tasks inside the ros-control infra-structure.
+     This class encapsulates the Stack of Tasks inside the ros-control
+     infra-structure.
 
    */
   class TiagoRosControlTest : public lci::ControllerBase
@@ -96,6 +99,9 @@ namespace tiago_roscontrol_test
     /// \brief Interface to the joints controlled in position.
     lhi::VelocityJointInterface * vel_iface_;
 
+    /// \brief Interface to the joints controlled in position and velocity.
+    lhi::PosVelJointInterface * posvel_iface_;
+
     /// \brief Interface to the joints controlled in force.
     lhi::EffortJointInterface * effort_iface_;
 
@@ -127,6 +133,10 @@ namespace tiago_roscontrol_test
     /// \brief Implement a PD controller for the robot when the dynamic graph
     /// is not on.
     std::map<std::string, ControlPDMotorControlData> velocity_mode_pd_motors_;
+
+    /// \brief Implement a PD controller for the robot when the dynamic graph
+    /// is not on.
+    std::map<std::string, ControlPDMotorControlData> posvel_mode_pd_motors_;
 
     /// \brief Verbosity level for ROS messages during initRequest/initialization phase.
     /// 0: no messages or error 1: info 2: debug
@@ -234,6 +244,9 @@ namespace tiago_roscontrol_test
     void localStandbyEffortControlMode(const ros::Duration& period);
     /// Default control in velocity.
     void localStandbyVelocityControlMode(const ros::Duration& period);
+    /// Default control in velocity.
+    void localStandbyPosVelControlMode(const ros::Time & time,
+                                       const ros::Duration& period);    
     /// Default control in position.
     void localStandbyPositionControlMode(const ros::Time&, const ros::Duration& );
 
@@ -254,6 +267,7 @@ namespace tiago_roscontrol_test
     bool increase_head_ = true;
     bool increase_arm_ = true;
     bool increase_gripper_ = true;
+    unsigned int ltime_;
   };
 }
 

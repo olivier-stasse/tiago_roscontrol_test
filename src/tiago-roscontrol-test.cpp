@@ -64,7 +64,8 @@ namespace tiago_roscontrol_test
     // -> 124 Mo of data.
     type_name_("TiagoRosControlTest"),
     simulation_mode_(false),
-    verbosity_level_(0)
+    verbosity_level_(0),
+    ltime_(0)
   {
     RESETDEBUG4();
     profileLog_.length=300000;
@@ -160,26 +161,42 @@ namespace tiago_roscontrol_test
     // Check if construction finished cleanly
     if (state_!=CONSTRUCTED)
       {
-	ROS_ERROR("Cannot initialize this controller because it failed to be constructed");
+	ROS_ERROR("Cannot initialize this controller because "
+                  "it failed to be constructed");
       }
 
     // Get a pointer to the joint position control interface
-    pos_iface_ = robot_hw->get<PositionJointInterface>();
+    posvel_iface_ = robot_hw->get<PosVelJointInterface>();
     if (!pos_iface_)
       {
-	ROS_WARN("This controller did not find  a hardware interface of type PositionJointInterface."
-		 " Make sure this is registered in the %s::RobotHW class if it is required."
+	ROS_WARN("This controller did not find  a hardware "
+                 "interface of type PositionJointInterface."
+		 " Make sure this is registered in the %s::"
+                 "RobotHW class if it is required."
 		 , lns.c_str());
       }
 
+    
+    
     // Get a pointer to the joint velocity control interface
     vel_iface_ = robot_hw->get<VelocityJointInterface>();
     if (!vel_iface_)
       {
-	ROS_WARN("This controller did not find  a hardware interface of type VelocityJointInterface."
-		 " Make sure this is registered in the %s::RobotHW class if it is required."
+	ROS_WARN("This controller did not find  a hardware "
+                 " interface of type VelocityJointInterface."
+		 " Make sure this is registered in the %s::RobotHW "
+                 "class if it is required."
 		 , lns.c_str());
       }
+
+    // Get a pointer to the joint position and velocity control interface
+    posvel_iface_ = robot_hw->get<PosVelJointInterface>();
+    if (!posvel_iface_)
+    {
+      ROS_WARN("This controller did not find  a hardware interface of type PosVelJointInterface."
+		 " Make sure this is registered in the %s::RobotHW class if it is required."
+		 , lns.c_str());
+    }
 
     // Get a pointer to the joint effort control interface
     effort_iface_ = robot_hw->get<EffortJointInterface>();
@@ -629,21 +646,35 @@ namespace tiago_roscontrol_test
                   case POSITION:
 		    aJointSotHandle.joint = pos_iface_->getHandle(joint_name);
 		    if (verbosity_level_>0)
-		      ROS_INFO_STREAM("Found joint " << joint_name << " in position "
-				      << i << " " << aJointSotHandle.joint.getName());
+		      ROS_INFO_STREAM("Found joint " << joint_name <<
+                                      " in position "
+				      << i << " " <<
+                                      aJointSotHandle.joint.getName());
                     break;
                   case POSITIONWVELOCITY:
+		    aJointSotHandle.posvelH = posvel_iface_->
+                        getHandle(joint_name);
+		    if (verbosity_level_>0)
+		      ROS_INFO_STREAM("Found joint " << joint_name <<
+                                      " in velocity "
+				      << i << " " <<
+                                      aJointSotHandle.joint.getName());
+                    
                   case VELOCITY:
 		    aJointSotHandle.joint = vel_iface_->getHandle(joint_name);
 		    if (verbosity_level_>0)
-		      ROS_INFO_STREAM("Found joint " << joint_name << " in velocity "
-				      << i << " " << aJointSotHandle.joint.getName());
+		      ROS_INFO_STREAM("Found joint " << joint_name <<
+                                      " in velocity " << i << " " <<
+                                      aJointSotHandle.joint.getName());
                     break;
                   case EFFORT:
-                    aJointSotHandle.joint = effort_iface_->getHandle(joint_name);
+                    aJointSotHandle.joint = effort_iface_->
+                        getHandle(joint_name);
                     if (verbosity_level_>0)
-                      ROS_INFO_STREAM("Found joint " << joint_name << " in effort "
-                          << i << " " << aJointSotHandle.joint.getName());
+                      ROS_INFO_STREAM("Found joint " << joint_name <<
+                                      " in effort "
+                                      << i << " "
+                                      << aJointSotHandle.joint.getName());
                 }
 
 		// throws on failure
@@ -917,7 +948,7 @@ namespace tiago_roscontrol_test
 	    lhi::JointHandle &aJoint = aJointSotHandle.joint;
 
 	    double vel_err = 0 - aJoint.getVelocity();
-	    double err = aJointSotHandle.desired_init_pose - aJoint.getPosition();
+            double err = aJointSotHandle.desired_init_pose - aJoint.getPosition();
 
 	    double local_command = ecpdcdata.pid_controller.computeCommand(err,vel_err,period);
 	    // Apply command
@@ -945,14 +976,47 @@ namespace tiago_roscontrol_test
 	    JointSotHandle &aJointSotHandle = joints_[joint_name];
 	    lhi::JointHandle &aJoint = aJointSotHandle.joint;
 
-	    double vel_err = 0 - aJoint.getVelocity();
-	    double err = aJointSotHandle.desired_init_pose - aJoint.getPosition();
-
-	    double local_command = ecpdcdata.pid_controller.computeCommand(err,vel_err,period);
-
-      aJoint.setCommand(0.2);
+            aJoint.setCommand(0.2);
 
 	    assert(aJoint.getName() == joint_name);
+	    if (first_time)
+	      if (verbosity_level_>1) {
+		ROS_INFO("Control joint %s (id %d) to %f\n",
+			 joint_name.c_str(),idJoint,
+			 aJoint.getPosition());
+	      }
+	  }
+      }
+    first_time=false;
+  }
+
+  void TiagoRosControlTest::
+  localStandbyPosVelControlMode(const ros::Time& time,const ros::Duration& period)
+  {
+    static bool first_time=true;
+
+    /// Iterate over all the joints
+    for(unsigned int idJoint=0;idJoint<joints_.size();idJoint++)
+      {
+        /// Find the joint
+        std::string joint_name = joints_name_[idJoint];
+
+        if (joints_[joint_name].ros_control_mode==POSITIONWVELOCITY)
+	  {
+	    JointSotHandle &aJointSotHandle = joints_[joint_name];
+	    lhi::PosVelJointHandle & aJoint = aJointSotHandle.posvelH;
+            
+	    double err = aJointSotHandle.desired_init_pose -
+                aJoint.getPosition();
+            double t = (time-start_).toSec();
+            double T = 5.; // Period in seconds.
+            double A =0.025;
+            double cmd_pos = aJointSotHandle.desired_init_pose +
+                A*std::sin(2*M_PI*t/T);
+            double cmd_vel = A*std::cos(2*M_PI*t/T)*2*M_PI/T;
+            
+            aJoint.setCommand(cmd_pos,cmd_vel);
+
 	    if (first_time)
 	      if (verbosity_level_>1) {
 		ROS_INFO("Control joint %s (id %d) to %f\n",
@@ -1020,7 +1084,8 @@ namespace tiago_roscontrol_test
               if (A < 0.001) {
                 ROS_WARN ("Amplitude is lower than 1 millimeter.");
               }
-              aJoint.setCommand(aJointSotHandle.desired_init_pose + A*std::sin(2 * M_PI * t / T));
+              aJoint.setCommand(aJointSotHandle.desired_init_pose +
+                                A*std::sin(2 * M_PI * t / T));
             }
             else if (joint_name == "arm_6_joint")
             {
@@ -1041,7 +1106,8 @@ namespace tiago_roscontrol_test
               if (A < 0.001) {
                 ROS_WARN ("Amplitude is lower than 1 millimeter.");
               }
-              aJoint.setCommand(aJointSotHandle.desired_init_pose + A*std::sin(2 * M_PI * t / T));
+              aJoint.setCommand(aJointSotHandle.desired_init_pose +
+                                A*std::sin(2 * M_PI * t / T));
             }
             else
             {
@@ -1072,6 +1138,7 @@ namespace tiago_roscontrol_test
      localStandbyEffortControlMode(period);
      localStandbyVelocityControlMode(period);
      localStandbyPositionControlMode(time, period);
+     ltime_++;
    }
 
   void TiagoRosControlTest::
