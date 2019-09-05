@@ -166,7 +166,7 @@ namespace tiago_roscontrol_test
       }
 
     // Get a pointer to the joint position control interface
-    posvel_iface_ = robot_hw->get<PosVelJointInterface>();
+    pos_iface_ = robot_hw->get<PositionJointInterface>();
     if (!pos_iface_)
       {
 	ROS_WARN("This controller did not find  a hardware "
