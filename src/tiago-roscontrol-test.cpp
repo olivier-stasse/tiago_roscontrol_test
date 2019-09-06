@@ -213,13 +213,13 @@ initInterfaces(lhi::RobotHW * robot_hw,
 
 
   // Return which resources are claimed by this controller
-  if (!pos_iface_)
+  if (pos_iface_)
     pos_iface_->clearClaims();
-  if (!vel_iface_)
+  if (vel_iface_)
     vel_iface_->clearClaims();
-  if (!posvel_iface_)
+  if (posvel_iface_)
     posvel_iface_->clearClaims();
-  if (!effort_iface_)
+  if (effort_iface_)
     effort_iface_->clearClaims();
     
 
@@ -238,7 +238,7 @@ initInterfaces(lhi::RobotHW * robot_hw,
   iface_res.hardware_interface =
       hardware_interface::internal::
       demangledTypeName<PositionJointInterface>();
-  if (!pos_iface_)
+  if (pos_iface_)
   {
     iface_res.resources = pos_iface_->getClaims();
     claimed_resources.push_back(iface_res);
@@ -247,7 +247,7 @@ initInterfaces(lhi::RobotHW * robot_hw,
   iface_res.hardware_interface =
       hardware_interface::internal::
       demangledTypeName<VelocityJointInterface>();
-  if (!vel_iface_)
+  if (vel_iface_)
   {
     iface_res.resources = vel_iface_->getClaims();
     claimed_resources.push_back(iface_res);
@@ -256,7 +256,7 @@ initInterfaces(lhi::RobotHW * robot_hw,
   iface_res.hardware_interface =
       hardware_interface::internal::
       demangledTypeName<PosVelJointInterface>();
-  if (!posvel_iface_)
+  if (posvel_iface_)
   {
     iface_res.resources = posvel_iface_->getClaims();
     claimed_resources.push_back(iface_res);
@@ -265,7 +265,7 @@ initInterfaces(lhi::RobotHW * robot_hw,
   iface_res.hardware_interface =
       hardware_interface::internal::
       demangledTypeName<EffortJointInterface>();
-  if (!effort_iface_)
+  if (effort_iface_)
   {
     iface_res.resources = effort_iface_->getClaims();
     claimed_resources.push_back(iface_res);
@@ -275,13 +275,13 @@ initInterfaces(lhi::RobotHW * robot_hw,
   if (verbosity_level_>0)
     displayClaimedResources(claimed_resources);
 
-  if (!pos_iface_)
+  if (pos_iface_)
     pos_iface_->clearClaims();
-  if (!vel_iface_)
+  if (vel_iface_)
     vel_iface_->clearClaims();
-  if (!posvel_iface_)
+  if (posvel_iface_)
     posvel_iface_->clearClaims();    
-  if (!effort_iface_)
+  if (effort_iface_)
     effort_iface_->clearClaims();
   
 #endif
