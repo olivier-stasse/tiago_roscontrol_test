@@ -138,7 +138,8 @@ namespace tiago_roscontrol_test
     /// is not on.
     std::map<std::string, ControlPDMotorControlData> posvel_mode_pd_motors_;
 
-    /// \brief Verbosity level for ROS messages during initRequest/initialization phase.
+    /// \brief Verbosity level for ROS messages during
+    /// initRequest/initialization phase.
     /// 0: no messages or error 1: info 2: debug
     int verbosity_level_;
 
@@ -147,7 +148,7 @@ namespace tiago_roscontrol_test
 
     /// Profile log
     rc_sot_system::ProfileLog profileLog_;
-
+    
   public :
 
     TiagoRosControlTest ();
@@ -165,7 +166,8 @@ namespace tiago_roscontrol_test
     /// \brief Claims
     bool init();
 
-    /// \brief Read the sensor values, calls the control graph, and apply the control.
+    /// \brief Read the sensor values, calls the control graph,
+    /// and apply the control.
     ///
     void update(const ros::Time&, const ros::Duration& );
     /// \brief Starting by filling the sensors.
