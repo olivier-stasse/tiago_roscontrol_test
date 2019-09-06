@@ -68,7 +68,7 @@ TiagoRosControlTest():
     ltime_(0)
 {
   RESETDEBUG4();
-  profileLog_.length=300000;
+  //  profileLog_.length=300000;
 }
 
 void TiagoRosControlTest::
@@ -107,26 +107,6 @@ displayClaimedResources(ClaimedResources & claimed_resources)
 #endif
 }
 
-void TiagoRosControlTest::initLogs()
-{
-  ROS_INFO_STREAM("Initialize log data structure" << profileLog_.nbDofs);
-  ROS_INFO_STREAM("Initialize log data structure" << profileLog_.nbForceSensors);
-
-
-  /// Initialize the size of the data to store.
-  ///
-  /// Set temporary profileLog to one
-  /// because DataOneIter is just for one iteration.
-  size_t tmp_length = profileLog_.length;
-  profileLog_.length = 1;
-  DataOneIter_.init(profileLog_);
-
-  /// Set profile Log to real good value for the stored data.
-  profileLog_.length= tmp_length;
-  /// Initialize the data logger for 300s.
-  //    RcSotLog_.init(profileLog_);
-
-}
 
 bool TiagoRosControlTest::
 initRequest (lhi::RobotHW * robot_hw,
@@ -144,7 +124,7 @@ initRequest (lhi::RobotHW * robot_hw,
     return false;
 
   /// Create all the internal data structures for logging.
-  initLogs();
+  //  initLogs();
 
   return true;
 }
@@ -211,29 +191,6 @@ initInterfaces(lhi::RobotHW * robot_hw,
              lns.c_str());
   }
 
-  // Get a pointer to the force-torque sensor interface
-  ft_iface_ = robot_hw->get<ForceTorqueSensorInterface>();
-  if (! ft_iface_ )
-  {
-    ROS_WARN("This controller did not find a hardware interface "
-             " of type '%s '. "
-             " Make sure this is registered inthe %s::RobotHW "
-             "class if it is required.",
-             internal :: demangledTypeName<ForceTorqueSensorInterface>().
-             c_str(),lns.c_str());
-  }
-
-  // Get a pointer to the IMU sensor interface
-  imu_iface_ = robot_hw->get<ImuSensorInterface>();
-  if (! imu_iface_)
-  {
-    ROS_WARN("This controller did not find a hardware interface"
-             " of type '%s'."
-             " Make sure this is registered in the %s::RobotHW "
-             "class if it is required.",
-             internal :: demangledTypeName<ImuSensorInterface>().
-             c_str(),lns.c_str());
-  }
 
   // Temperature sensor not available in simulation mode
   if (!simulation_mode_)
@@ -342,15 +299,6 @@ init()
 {
   if (!initJoints())
     return false;
-  if (!initIMU()) {
-    ROS_WARN("could not initialize IMU sensor(s).");
-  }
-  if (!initForceSensors()) {
-    ROS_WARN("could not initialize force sensor(s).");
-  }
-  if (!initTemperatureSensors()) {
-    ROS_WARN("could not initialize temperature sensor(s).");
-  }
 
   return true;
 }
@@ -362,13 +310,6 @@ readParamsVerbosityLevel(ros::NodeHandle &robot_nh)
   {
     robot_nh.getParam("/tiago_roscontrol_test/verbosity_level",verbosity_level_);
     ROS_INFO_STREAM("Verbosity_level " << verbosity_level_);
-  }
-  if (robot_nh.hasParam("/tiago_roscontrol_test/log/size"))
-  {
-    int llength;
-    robot_nh.getParam("/tiago_roscontrol_test/log/size",llength);
-    profileLog_.length=(unsigned int)llength;
-    ROS_INFO_STREAM("Size of the log " << profileLog_.length);
   }
 
 }
@@ -523,7 +464,6 @@ readParamsJointNames(ros::NodeHandle &robot_nh)
 
   /// Deduce from this the degree of freedom number.
   nbDofs_ = joints_name_.size();
-  profileLog_.nbDofs = nbDofs_;
 
   return true;
 }
@@ -725,95 +665,8 @@ initJoints()
 
 }
 
-bool TiagoRosControlTest::
-initIMU()
-{
-  if (!imu_iface_) return false;
 
-  // get all imu sensor names
-  const std :: vector<std :: string >& imu_iface_names = imu_iface_->getNames();
-  if (verbosity_level_>0)
-  {
-    for (unsigned i=0; i <imu_iface_names.size(); i++)
-      ROS_INFO("Got sensor %s", imu_iface_names[i].c_str());
-  }
-  for (unsigned i=0; i <imu_iface_names.size(); i++){
-    // sensor handle on imu
-    imu_sensor_.push_back(imu_iface_->getHandle(imu_iface_names[i]));
-  }
 
-  return true ;
-}
-
-bool TiagoRosControlTest::
-initForceSensors()
-{
-  profileLog_.nbForceSensors = 0.0;
-  if (!ft_iface_) return false;
-
-  // get force torque sensors names package.
-  const std::vector<std::string>& ft_iface_names = ft_iface_->getNames();
-  if (verbosity_level_>0)
-  {
-    for (unsigned i=0; i <ft_iface_names.size(); i++)
-      ROS_INFO("Got sensor %s", ft_iface_names[i].c_str());
-  }
-  for (unsigned i=0; i <ft_iface_names.size(); i++){
-    // sensor handle on torque forces
-    ft_sensors_.push_back(ft_iface_->getHandle(ft_iface_names[i]));
-  }
-  profileLog_.nbForceSensors = ft_iface_names.size();
-  return true;
-}
-
-bool TiagoRosControlTest::
-initTemperatureSensors()
-{
-  if (!simulation_mode_)
-  {
-#ifdef TEMPERATURE_SENSOR_CONTROLLER
-    if (!act_temp_iface_) return false;
-
-    // get temperature sensors names
-    const std::vector<std::string>& act_temp_iface_names = act_temp_iface_->getNames();
-
-    if (verbosity_level_>0)
-    {
-      ROS_INFO("Actuator temperature sensors: %ld",act_temp_iface_names.size() );
-
-      for (unsigned i=0; i <act_temp_iface_names.size(); i++)
-        ROS_INFO("Got sensor %s", act_temp_iface_names[i].c_str());
-    }
-
-    for (unsigned i=0; i <act_temp_iface_names.size(); i++){
-      // sensor handle on actuator temperature
-      act_temp_sensors_.push_back(act_temp_iface_->getHandle(act_temp_iface_names[i]));
-    }
-#endif
-  }
-
-  return true;
-}
-
-void TiagoRosControlTest::
-fillSensorsIn(std::string &title, std::vector<double> & data)
-{
-  (void) title;
-  (void) data;
-  /*
- /// Tries to find the mapping from the local validation
- /// to the SoT device.
- it_map_rt_to_sot it_mapRC2Sot= mapFromRCToSotDevice_.find(title);
- /// If the mapping is found
- if (it_mapRC2Sot!=mapFromRCToSotDevice_.end())
- {
- /// Expose the data to the SoT device.
- std::string lmapRC2Sot = it_mapRC2Sot->second;
- sensorsIn_[lmapRC2Sot].setName(lmapRC2Sot);
- sensorsIn_[lmapRC2Sot].setValues(data);
- }
-  */
-}
 
 void TiagoRosControlTest::
 fillJoints()
@@ -842,123 +695,11 @@ fillJoints()
     }
   }
 
-  /// Update SoT internal values
-  std::string ltitle("motor-angles");
-  fillSensorsIn(ltitle,DataOneIter_.motor_angle);
-  ltitle = "joint-angles";
-  fillSensorsIn(ltitle,DataOneIter_.joint_angle);
-  ltitle = "velocities";
-  fillSensorsIn(ltitle,DataOneIter_.velocities);
-  ltitle = "torques";
-  fillSensorsIn(ltitle,DataOneIter_.torques);
-  ltitle = "currents";
-  fillSensorsIn(ltitle,DataOneIter_.motor_currents);
 
 }
 
-void TiagoRosControlTest::setSensorsImu(std::string &name,
-                                        int IMUnb,
-                                        std::vector<double> & data)
-{
-  std::ostringstream labelOss;
-  labelOss << name << IMUnb;
-  std::string label_s = labelOss.str();
-  //fillSensorsIn(label_s,data);
-  (void) data;
-}
-
-void TiagoRosControlTest::
-fillImu()
-{
-  for(unsigned int idIMU=0;idIMU<imu_sensor_.size();idIMU++)
-  {
-    /// Fill orientations, gyrometer and acceleration from IMU.
-    if (imu_sensor_[idIMU].getOrientation())
-    {
-      for(unsigned int idquat = 0;idquat<4;idquat++)
-      {
-        DataOneIter_.orientation[idquat] = imu_sensor_[idIMU].getOrientation ()[idquat];
-      }
-    }
-    if (imu_sensor_[idIMU].getAngularVelocity())
-    {
-      for(unsigned int idgyrometer = 0;idgyrometer<3;
-          idgyrometer++)
-      {
-        DataOneIter_.gyrometer[idgyrometer] =
-            imu_sensor_[idIMU].getAngularVelocity()[idgyrometer];
-      }
-    }
-    if (imu_sensor_[idIMU].getLinearAcceleration())
-    {
-      for(unsigned int idlinacc = 0;idlinacc<3;
-          idlinacc++)
-      {
-        DataOneIter_.accelerometer[idlinacc] =
-            imu_sensor_[idIMU].getLinearAcceleration()[idlinacc];
-      }
-    }
-
-    std::string orientation_s("orientation_");
-    setSensorsImu(orientation_s, idIMU, DataOneIter_.orientation);
-
-    std::string gyrometer_s("gyrometer_");
-    setSensorsImu(gyrometer_s, idIMU, DataOneIter_.gyrometer);
-
-    std::string accelerometer_s("accelerometer_");
-    setSensorsImu(accelerometer_s, idIMU, DataOneIter_.accelerometer);
-  }
-}
-
-void TiagoRosControlTest::
-fillForceSensors()
-{
-  for(unsigned int idFS=0;idFS<ft_sensors_.size();
-      idFS++)
-  {
-    for(unsigned int idForce=0;idForce<3;idForce++)
-      DataOneIter_.force_sensors[idFS*6+idForce]=
-          ft_sensors_[idFS].getForce()[idForce];
-    for(unsigned int idTorque=0;idTorque<3;idTorque++)
-      DataOneIter_.force_sensors[idFS*6+3+idTorque]=
-          ft_sensors_[idFS].getTorque()[idTorque];
-  }
 
 
-  std::string alabel("forces");
-  fillSensorsIn(alabel,DataOneIter_.force_sensors);
-}
-
-void TiagoRosControlTest::
-fillTempSensors()
-{
-  if (!simulation_mode_)
-  {
-#ifdef TEMPERATURE_SENSOR_CONTROLLER
-    for(unsigned int idFS=0;idFS<act_temp_sensors_.size();idFS++)
-    {
-      DataOneIter_.temperatures[idFS]=  act_temp_sensors_[idFS].getValue();
-    }
-#endif
-  }
-  else
-  {
-    for(unsigned int idFS=0;idFS<nbDofs_;idFS++)
-      DataOneIter_.temperatures[idFS]=  0.0;
-  }
-
-  std::string alabel("act-temp");
-  fillSensorsIn(alabel,DataOneIter_.temperatures);
-}
-
-void TiagoRosControlTest::
-fillSensors()
-{
-  fillJoints();
-  fillImu();
-  fillForceSensors();
-  fillTempSensors();
-}
 
 void TiagoRosControlTest::
 localStandbyEffortControlMode(const ros::Duration& period)
@@ -1160,7 +901,6 @@ update(const ros::Time& time, const ros::Duration& period)
 {
   // But in velocity mode it means that we are sending 0
   /// Update the sensors.
-  fillSensors();
 
   // Therefore implements a default PD controller on the system.
   // Applying both to handle mixed system.
@@ -1175,7 +915,6 @@ starting(const ros::Time & time)
 {
   start_ = time;
 
-  fillSensors();
 }
 
 void TiagoRosControlTest::

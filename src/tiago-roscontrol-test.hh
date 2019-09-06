@@ -81,11 +81,6 @@ namespace tiago_roscontrol_test
     std::map<std::string,JointSotHandle> joints_;
     std::vector<std::string> joints_name_;
 
-    /// \brief Vector towards the IMU.
-    std::vector<lhi::ImuSensorHandle> imu_sensor_;
-
-    /// \brief Vector of 6D force sensor.
-    std::vector<lhi::ForceTorqueSensorHandle> ft_sensors_;
 
 #ifdef TEMPERATURE_SENSOR_CONTROLLER
     /// \brief Vector of temperature sensors for the actuators.
@@ -146,8 +141,6 @@ namespace tiago_roscontrol_test
     /// URDF model of the robot.
     urdf::ModelInterfaceSharedPtr modelURDF_;
 
-    /// Profile log
-    rc_sot_system::ProfileLog profileLog_;
     
   public :
 
@@ -218,28 +211,10 @@ namespace tiago_roscontrol_test
     void readParamsVerbosityLevel(ros::NodeHandle &robot_nh);
     ///@}
 
-    /// \brief Fill the SoT map structures
-    void fillSensorsIn(std::string &title, std::vector<double> & data);
 
     /// \brief Get the information from the low level and calls fillSensorsIn.
     void fillJoints();
 
-    /// In the map sensorsIn_ creates the key "name_IMUNb"
-    /// and associate to this key the vector data.
-    void setSensorsImu(std::string &name,
-		       int IMUNb,
-		       std::vector<double> &data);
-
-    /// @{ \name Fill the sensors
-    /// Read the imus and set the interface to the SoT.
-    void fillImu();
-    /// Read the force sensors
-    void fillForceSensors();
-    /// Read the temperature sensors
-    void fillTempSensors();
-    /// Entry point for reading all the sensors .
-    void fillSensors();
-    ///@}
 
     ///@{ Control the robot while waiting for the SoT
     /// Default control in effort.
